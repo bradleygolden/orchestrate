@@ -51,7 +51,10 @@ else add claude claude no "" "" "" "https://code.claude.com"; fi
 if have agy; then
   v="$(ver agy --version)"; a="unknown"
   [ -n "${GEMINI_API_KEY:-}" ] && a="ready (GEMINI_API_KEY)"
-  [ -d "$HOME/.gemini/antigravity-cli" ] && [ "$a" = unknown ] && a="probably (settings dir exists)"
+  if [ "$a" = unknown ]; then
+    o="$(timeout 20 agy models 2>&1)"
+    case "$o" in *"sign in"*|*"Sign in"*|*"log in"*) a="needs-login (run 'agy' interactively once)";; *gemini*) a="ready";; esac
+  fi
   add agy agy yes "$v" "$a" "gemini-3.x (e.g. gemini-3.7-flash-high)" "headless: agy -p --dangerously-skip-permissions --output-format json"
 else add agy agy no "" "" "" "curl -fsSL https://antigravity.google/cli/install.sh | bash  (replaces Gemini CLI for Google-account auth)"; fi
 
@@ -93,7 +96,11 @@ else add opencode opencode no "" "" "" "curl -fsSL https://opencode.ai/install |
 if have pi; then
   v="$(ver pi --version)"; a="unknown"
   [ -n "${ZAI_API_KEY:-}" ] && a="ready for zai (ZAI_API_KEY)"
-  [ -f "$HOME/.pi/agent/auth.json" ] && a="probably (auth.json exists)"
+  if [ "$a" = unknown ]; then
+    if [ -s "$HOME/.pi/agent/auth.json" ] && grep -q ':' "$HOME/.pi/agent/auth.json" 2>/dev/null; then a="ready (providers in ~/.pi/agent/auth.json)"
+    elif [ -n "${ANTHROPIC_API_KEY:-}${OPENAI_API_KEY:-}${GEMINI_API_KEY:-}" ]; then a="ready (API key in env)"
+    else a="needs-login (run 'pi' then /login — Anthropic/OpenAI OAuth or z.ai key)"; fi
+  fi
   add pi pi yes "$v" "$a" "provider/model[:thinking], e.g. zai/glm-5.3:high" "headless: pi -p --no-session; NO permission prompts at all"
 else add pi pi no "" "" "" "npm i -g --ignore-scripts @earendil-works/pi-coding-agent"; fi
 
