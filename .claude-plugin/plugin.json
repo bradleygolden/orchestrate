@@ -1,0 +1,8 @@
+{
+  "name": "orchestrate",
+  "description": "Judgement-driven orchestrator/router: delegate well-scoped tasks to whichever local agent CLI (Codex, Claude, Gemini/Antigravity, Grok, Cursor, OpenCode, pi, z.ai GLM) the user prefers per task type; verify results yourself.",
+  "version": "0.1.0",
+  "author": { "name": "Bradley Golden" },
+  "license": "MIT",
+  "skills": ["./skills/orchestrate"]
+}

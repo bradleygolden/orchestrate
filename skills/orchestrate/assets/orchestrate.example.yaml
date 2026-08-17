@@ -1,0 +1,93 @@
+# orchestrate.yaml — routing preferences for the `orchestrate` skill.
+#
+# Where it lives (first match wins for each key; project overlays user):
+#   $ORCHESTRATE_CONFIG            explicit path
+#   <repo>/.agents/orchestrate.yaml   project-level (commit it if the whole team shares the fleet)
+#   ~/.agents/orchestrate.yaml        user-level (your personal fleet)
+#
+# This file is read by the orchestrating agent (an LLM), not parsed by scripts, so comments and
+# prose are fine. Keep it honest: only list agents you actually have installed + authenticated
+# (run scripts/inventory.sh). Secrets are referenced as $ENV_VARS, never inlined.
+
+version: 1
+
+# ── Agents ─────────────────────────────────────────────────────────────────────────────────
+# A named agent = a CLI + optional model / effort / env. Names are what `routes` refer to.
+# `cli` must be one of: codex | claude | agy | gemini | grok | cursor | opencode | pi | custom
+# (see references/adapters.md). Everything maps 1:1 onto scripts/delegate.sh flags.
+agents:
+  codex:                       # OpenAI Codex CLI on your ChatGPT plan
+    cli: codex
+    # model: gpt-5.x-…          # omit → uses ~/.codex/config.toml default (recommended: ChatGPT plans reject unknown slugs)
+    effort: high
+    strengths: [implement, fix, refactor, tests, adversarial-review]
+  codex-fast:
+    cli: codex
+    effort: low
+    strengths: [mechanical, boilerplate, docs]
+  claude:                      # Claude Code as a *worker* (useful when the orchestrator is a different vendor)
+    cli: claude
+    model: opus
+    strengths: [ui, judgment-heavy, long-context]
+  grok:                        # Grok Build CLI (xAI)
+    cli: grok
+    model: grok-4.6
+    strengths: [review, second-opinion, research]
+  agy:                         # Antigravity CLI — Google's terminal agent (replaced Gemini CLI for Google-account auth)
+    cli: agy
+    strengths: [research, large-context-reads, ui-mockups]
+  glm:                         # z.ai GLM Coding Plan via the Claude Code binary (z.ai has no CLI of its own)
+    cli: claude
+    model: glm-5.3
+    env:
+      ANTHROPIC_BASE_URL: https://api.z.ai/api/anthropic
+      ANTHROPIC_AUTH_TOKEN: $ZAI_API_KEY
+      ANTHROPIC_DEFAULT_OPUS_MODEL: glm-5.3
+      ANTHROPIC_DEFAULT_SONNET_MODEL: glm-5.3
+      ANTHROPIC_DEFAULT_HAIKU_MODEL: glm-4.7
+      API_TIMEOUT_MS: "3000000"
+    strengths: [implement, tests, docs, cheap-bulk-work]
+  # glm-pi:                    # same provider via pi (no permission prompts at all — use with worktrees)
+  #   cli: pi
+  #   model: zai/glm-5.3:high
+  # glm-opencode:
+  #   cli: opencode
+  #   model: zai-coding-plan/glm-5.3   # needs ZHIPU_API_KEY
+  # cursor:
+  #   cli: cursor
+  #   model: sonnet-4
+
+# ── Routes ─────────────────────────────────────────────────────────────────────────────────
+# Lane (task type) → ordered preference. First agent that inventory says is ready wins; the rest
+# are fallbacks. `self` = the orchestrator does it inline. Add your own lanes freely; the
+# orchestrator classifies each task into the closest lane, `default` otherwise.
+routes:
+  implement:  [codex, glm, grok]
+  fix:        [codex, grok]
+  refactor:   [codex, glm]
+  test:       [glm, codex]
+  review:     [grok, codex, agy]     # builder ≠ reviewer: skip whichever agent wrote the code
+  research:   [agy, grok, self]
+  ui:         [claude, codex]
+  docs:       [glm, codex-fast, self]
+  mechanical: [codex-fast, glm]      # renames, codemods, formatting sweeps
+  default:    [codex]
+
+# ── Policy ─────────────────────────────────────────────────────────────────────────────────
+policy:
+  # Solo is the default. Delegate only when the task is at least this big AND well-scoped:
+  #   never  = orchestrator does everything itself unless the user names an agent
+  #   small  = delegate almost anything scoped (max token savings on the orchestrator)
+  #   medium = delegate multi-file / >~15 min tasks and anything parallelizable   (recommended)
+  #   large  = delegate only big, independent chunks
+  delegate_threshold: medium
+  parallel_max: 3                     # concurrent delegates
+  worktree: auto                      # always | auto (when parallel or risky) | never
+  timeout_s: 1800
+  delegate_may_commit: false          # orchestrator reviews the diff and lands the commit
+  verify:                             # after every delegate run
+    - gates                           # re-run the repo's real test/lint/typecheck commands yourself
+    - diff                            # read the diff; check scope creep against the brief
+    - cross-review-on-risk            # for auth/payments/data-migration/security: review lane, different vendor
+  retry: 1                            # re-brief once with correction context, then fall back to next agent
+  escalate_after: 3                   # total failed attempts → stop and ask the human

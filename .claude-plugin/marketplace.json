@@ -1,0 +1,13 @@
+{
+  "name": "bradleygolden-orchestrate",
+  "owner": { "name": "Bradley Golden" },
+  "metadata": { "description": "Cross-CLI orchestrator/router skill" },
+  "plugins": [
+    {
+      "name": "orchestrate",
+      "source": "./",
+      "description": "Judgement-driven orchestrator/router across local agent CLIs (Codex, Claude, Antigravity/Gemini, Grok, Cursor, OpenCode, pi, z.ai GLM).",
+      "version": "0.1.0"
+    }
+  ]
+}
