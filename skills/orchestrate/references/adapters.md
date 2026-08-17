@@ -10,7 +10,7 @@ Legend: **write** = autonomous edits + commands; **read** = read-only / plan whe
 |---|---|---|---|---|---|---|---|---|
 | codex | `codex exec` | stdin (`-`) | `-s workspace-write` | `-s read-only` | `-m` | `-c model_reasoning_effort="low\|medium\|high\|xhigh"` | `-C` | `-o file` (final message) |
 | claude | `claude -p` | stdin | `--permission-mode bypassPermissions` | `--allowedTools "Read Glob Grep …"` | `--model` | `--effort low…max` | `cd` | json `.result` |
-| agy | `agy -p` | arg | `--dangerously-skip-permissions` | `--mode plan` | `--model` | `--effort low\|medium\|high` | `cd` | json `.response` |
+| agy | `agy -p --add-dir <cwd>` | arg | `--dangerously-skip-permissions` | `--mode plan` (advisory only) | `--model` | `--effort low\|medium\|high` | `cd` | json `.response` |
 | gemini | `gemini -p` | arg | `--approval-mode yolo` | `--approval-mode plan` | `-m auto\|pro\|flash` | — | `cd` | json `.response` |
 | grok | `grok --prompt-file` | file | `--permission-mode bypassPermissions` | `--permission-mode plan` | `-m` | `--reasoning-effort` | `--cwd` | json `.text` |
 | cursor | `agent -p` (old: `cursor-agent`) | arg | `--force` | (omit → proposes only) | `--model` | — | `cd` | json `.result` |
@@ -49,6 +49,8 @@ and keeps the raw JSON in `raw.json`. Stdin is fed from the brief (codex, claude
 - Gemini CLI stopped serving Google-account (free/AI Pro/Ultra) users on 2026-06-18; `agy` replaced
   it. Install: `curl -fsSL https://antigravity.google/cli/install.sh | bash`. Auth: interactive
   Google login once, or API-key mode (`modelProvider: "gemini"` in `~/.gemini/antigravity-cli/settings.json` + `GEMINI_API_KEY`).
+- **Ignores the shell cwd** — works in `~/.gemini/antigravity-cli/scratch` unless you pass `--add-dir <dir>` (delegate.sh does). **No enforceable headless read-only mode**: `--mode plan` + `--dangerously-skip-permissions` still writes; read mode is advisory (guard line + plan) → run agy reviews with `--worktree` and check `changed_files`. Enforce properly only via `permissions.allow` rules in `~/.gemini/antigravity-cli/settings.json`.
+- Models (Aug 2026): `gemini-3.7-flash-{low,medium,high}`, `gemini-3.6/3.5-flash-*`, `gemini-3.1-pro-{low,high}`, plus `claude-sonnet-4-6`, `claude-opus-4-6-thinking`, `gpt-oss-120b-medium` via Google. `agy models` to list.
 - `-p` (alias `--print`), `--print-timeout 10m` (default 5m — delegate.sh passes the run timeout),
   `--model gemini-3.x-…`, `--effort low|medium|high`, `--output-format json` → `.response`,
   `--json-schema`, `--mode accept-edits|plan`, `--sandbox`, `--add-dir`, `--continue`/`--conversation <id>` for follow-ups. Headless soft-denies shell unless `--dangerously-skip-permissions`. Auth: run `agy` once interactively (Google sign-in); `agy models` lists model ids.

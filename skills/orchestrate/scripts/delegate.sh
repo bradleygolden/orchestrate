@@ -140,8 +140,15 @@ case "$CLI" in
     EXTRACT="jq:.response";;
   agy)
     have agy || die "agy (Antigravity CLI) not installed: curl -fsSL https://antigravity.google/cli/install.sh | bash"
-    CMD=(agy -p "$PROMPT_TEXT" --output-format json --print-timeout "${TIMEOUT}s")
-    if [ "$MODE" = write ]; then CMD+=(--dangerously-skip-permissions); else CMD+=(--mode plan); fi
+    # agy ignores the shell cwd (works in ~/.gemini/antigravity-cli/scratch) unless the dir is added to its workspace.
+    # It has no headless-enforceable read-only mode: plan mode + skip-permissions still writes. Read mode is
+    # therefore advisory (guard line + plan mode) — use --worktree for agy reviews and check changed_files.
+    AGY_PROMPT="$PROMPT_TEXT"
+    [ "$MODE" = read ] && AGY_PROMPT="READ-ONLY TASK: do not create, modify, or delete any files. Only read, analyse, and report.
+
+$PROMPT_TEXT"
+    CMD=(agy -p "$AGY_PROMPT" --add-dir "$CWD" --dangerously-skip-permissions --output-format json --print-timeout "${TIMEOUT}s")
+    [ "$MODE" = read ] && CMD+=(--mode plan)
     [ -n "$MODEL" ] && CMD+=(--model "$MODEL")
     [ -n "$EFFORT" ] && CMD+=(--effort "$(clamp_effort agy)")
     EXTRACT="jq:.response";;
@@ -197,10 +204,11 @@ START=$(date +%s)
 # -u CLAUDECODE: allow `claude` to run nested inside a Claude Code session; harmless for other CLIs.
 ( cd "$CWD" && exec env -u CLAUDECODE -u CLAUDE_CODE_ENTRYPOINT "${CHILD_ENV[@]+"${CHILD_ENV[@]}"}" "${CMD[@]}" <"$STDIN_SRC" >"$STDOUT_FILE" 2>"$STDERR_FILE" ) &
 PID=$!
-( sleep "$TIMEOUT"; kill -TERM "$PID" 2>/dev/null; sleep 10; kill -KILL "$PID" 2>/dev/null ) 2>/dev/null &
+# Watchdog: must not inherit our stdout/stderr (it would hold the caller's pipe open until the sleep ends).
+( sleep "$TIMEOUT"; kill -TERM "$PID" 2>/dev/null; sleep 10; kill -KILL "$PID" 2>/dev/null ) </dev/null >/dev/null 2>&1 &
 WD=$!
 wait "$PID"; RC=$?
-kill "$WD" 2>/dev/null; wait "$WD" 2>/dev/null
+pkill -P "$WD" 2>/dev/null; kill "$WD" 2>/dev/null; wait "$WD" 2>/dev/null
 END=$(date +%s); DUR=$((END-START))
 
 STATUS="ok"

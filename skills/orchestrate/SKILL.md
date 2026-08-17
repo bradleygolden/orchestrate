@@ -143,7 +143,7 @@ work landed (branch/commit). Mention anything you did inline vs delegated and wh
 - Delegates read stdin: `delegate.sh` always closes/feeds it correctly; if you call a CLI by hand, add `</dev/null`.
 - Nested `claude` inside Claude Code works because the script unsets `CLAUDECODE`.
 - Cursor: never run `agent status`/`cursor-agent status` non-interactively (starts a login flow).
-- pi has **no** permission prompts — always `--worktree` or trust the brief.
+- pi has **no** permission prompts — always `--worktree` or trust the brief. agy's read mode is advisory (can still write) — use `--worktree` for agy reviews and check `changed_files`.
 - Google: `agy` (Antigravity CLI) is the current terminal agent; `gemini` only works with a paid `GEMINI_API_KEY`.
 - z.ai/GLM has no CLI: route through `claude` (Anthropic-compatible endpoint), `opencode`, or `pi`. See adapters.md.
 - If a delegate's `result.md` looks like an auth or config error, fix/skip that agent and move on — don't retry blindly.
