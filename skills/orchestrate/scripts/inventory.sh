@@ -83,10 +83,10 @@ else add cursor agent no "" "" "" "curl https://cursor.com/install -fsS | bash";
 
 # ---- opencode ------------------------------------------------------------------------------
 if have opencode; then
-  v="$(ver opencode --version)"; a="unknown"
-  [ -n "${ZHIPU_API_KEY:-}" ] && a="ready for zai-coding-plan (ZHIPU_API_KEY)"
-  [ -f "$HOME/.local/share/opencode/auth.json" ] && a="probably (auth.json exists)"
-  add opencode opencode yes "$v" "$a" "provider/model, e.g. zai-coding-plan/glm-5.3, anthropic/claude-*, openai/gpt-*" "headless: opencode run --dir --auto -m provider/model"
+  v="$(ver opencode --version)"; a="ready (free opencode/* models; add providers with 'opencode auth login')"
+  [ -n "${ZHIPU_API_KEY:-}" ] && a="ready (+ zai-coding-plan via ZHIPU_API_KEY)"
+  [ -s "$HOME/.local/share/opencode/auth.json" ] && grep -q '"' "$HOME/.local/share/opencode/auth.json" 2>/dev/null && a="ready (providers in auth.json + free models)"
+  add opencode opencode yes "$v" "$a" "opencode/big-pickle (free default), opencode/*-free, zai-coding-plan/glm-5.3, anthropic/*, openai/*" "headless: opencode run --dir --auto -m provider/model"
 else add opencode opencode no "" "" "" "curl -fsSL https://opencode.ai/install | bash"; fi
 
 # ---- pi ------------------------------------------------------------------------------------

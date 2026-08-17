@@ -10,7 +10,7 @@ Legend: **write** = autonomous edits + commands; **read** = read-only / plan whe
 |---|---|---|---|---|---|---|---|---|
 | codex | `codex exec` | stdin (`-`) | `-s workspace-write` | `-s read-only` | `-m` | `-c model_reasoning_effort="low\|medium\|high\|xhigh"` | `-C` | `-o file` (final message) |
 | claude | `claude -p` | stdin | `--permission-mode bypassPermissions` | `--allowedTools "Read Glob Grep …"` | `--model` | `--effort low…max` | `cd` | json `.result` |
-| agy | `agy -p` | arg | `--dangerously-skip-permissions` | (omit → shell soft-denied) | `--model` | `--effort low\|medium\|high` | `cd` | json `.response` |
+| agy | `agy -p` | arg | `--dangerously-skip-permissions` | `--mode plan` | `--model` | `--effort low\|medium\|high` | `cd` | json `.response` |
 | gemini | `gemini -p` | arg | `--approval-mode yolo` | `--approval-mode plan` | `-m auto\|pro\|flash` | — | `cd` | json `.response` |
 | grok | `grok --prompt-file` | file | `--permission-mode bypassPermissions` | `--permission-mode plan` | `-m` | `--reasoning-effort` | `--cwd` | json `.text` |
 | cursor | `agent -p` (old: `cursor-agent`) | arg | `--force` | (omit → proposes only) | `--model` | — | `cd` | json `.result` |
@@ -51,7 +51,7 @@ and keeps the raw JSON in `raw.json`. Stdin is fed from the brief (codex, claude
   Google login once, or API-key mode (`modelProvider: "gemini"` in `~/.gemini/antigravity-cli/settings.json` + `GEMINI_API_KEY`).
 - `-p` (alias `--print`), `--print-timeout 10m` (default 5m — delegate.sh passes the run timeout),
   `--model gemini-3.x-…`, `--effort low|medium|high`, `--output-format json` → `.response`,
-  `--json-schema`. Headless soft-denies shell unless `--dangerously-skip-permissions`.
+  `--json-schema`, `--mode accept-edits|plan`, `--sandbox`, `--add-dir`, `--continue`/`--conversation <id>` for follow-ups. Headless soft-denies shell unless `--dangerously-skip-permissions`. Auth: run `agy` once interactively (Google sign-in); `agy models` lists model ids.
 - Docs: https://antigravity.google/docs/cli/headless
 
 ### gemini (Gemini CLI, API-key only now)
@@ -81,6 +81,7 @@ and keeps the raw JSON in `raw.json`. Stdin is fed from the brief (codex, claude
 
 ### opencode
 - Install: `curl -fsSL https://opencode.ai/install | bash`. `opencode run --dir <d> --auto -m provider/model "<msg>"`.
+- Works with **no auth** via free hosted models (`opencode/big-pickle` default, `opencode/*-free`); `opencode auth login` adds Anthropic (Claude sub OAuth), OpenAI, z.ai, etc.
 - `--auto` auto-approves everything not denied (without it headless runs can stall). Read-only:
   `--agent plan`. `--variant` = reasoning effort. `--format json` is an event stream (delegate.sh
   keeps text output).

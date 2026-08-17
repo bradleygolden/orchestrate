@@ -141,7 +141,7 @@ case "$CLI" in
   agy)
     have agy || die "agy (Antigravity CLI) not installed: curl -fsSL https://antigravity.google/cli/install.sh | bash"
     CMD=(agy -p "$PROMPT_TEXT" --output-format json --print-timeout "${TIMEOUT}s")
-    [ "$MODE" = write ] && CMD+=(--dangerously-skip-permissions)
+    if [ "$MODE" = write ]; then CMD+=(--dangerously-skip-permissions); else CMD+=(--mode plan); fi
     [ -n "$MODEL" ] && CMD+=(--model "$MODEL")
     [ -n "$EFFORT" ] && CMD+=(--effort "$(clamp_effort agy)")
     EXTRACT="jq:.response";;

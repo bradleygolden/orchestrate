@@ -50,6 +50,10 @@ agents:
   # glm-pi:                    # same provider via pi (no permission prompts at all — use with worktrees)
   #   cli: pi
   #   model: zai/glm-5.3:high
+  opencode-free:               # OpenCode's free hosted default — zero cost, good for mechanical/bulk work
+    cli: opencode
+    model: opencode/big-pickle
+    strengths: [mechanical, docs, cheap-bulk-work]
   # glm-opencode:
   #   cli: opencode
   #   model: zai-coding-plan/glm-5.3   # needs ZHIPU_API_KEY
@@ -70,7 +74,7 @@ routes:
   research:   [agy, grok, self]
   ui:         [claude, codex]
   docs:       [glm, codex-fast, self]
-  mechanical: [codex-fast, glm]      # renames, codemods, formatting sweeps
+  mechanical: [codex-fast, glm, opencode-free]   # renames, codemods, formatting sweeps
   default:    [codex]
 
 # ── Policy ─────────────────────────────────────────────────────────────────────────────────
