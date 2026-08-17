@@ -95,7 +95,7 @@ and keeps the raw JSON in `raw.json`. Stdin is fed from the brief (codex, claude
 - `-p "<prompt>" --no-session`, `--model provider/id[:thinking]`, `--thinking off…max`,
   `--tools read,grep,find,ls` for read-only, `--mode json` for JSONL events, `--api-key`.
 - **No permission prompts at all** — treat like a container: use `--worktree`.
-- z.ai built in: provider `zai` (`ZAI_API_KEY`), e.g. `--model zai/glm-5.3:high`.
+- z.ai built in: providers `zai` (`ZAI_API_KEY`, global) and `zai-coding-cn` (coding-plan endpoint; what `/login` → z.ai sets up), e.g. `--model zai-coding-cn/glm-5.3`. `pi --list-models` shows only providers you're logged into. Read mode (`--tools read,grep,find,ls`) is properly enforced — verified.
 - Docs: https://github.com/badlogic/pi-mono/blob/main/packages/coding-agent/README.md
 
 ### custom
